@@ -121,7 +121,7 @@ function movePiece() {
         winCheck();
 
         //TODO: implement a way to do CPU vs CPU
-        if (CPU && turn[0] == "P2") {
+        if (!win && CPU && turn[0] == "P2") {
             CPUturn();
         }
     }
@@ -345,6 +345,7 @@ function CPUturn() {
     
     console.log("tree:", gameTree);
     var CPUMove = gameTree.calculateBestSelection();
+    console.log("points:", gameTree.getPoints());
 
     if (CPUMove == undefined || CPUMove.getBestMove() == null) {
         alert(`No moves available! ${turn.pop()} wins!`);
@@ -360,7 +361,7 @@ function CPUturn() {
     //Wait half a second to move the piece
     setTimeout(() => {
         movePieceCPU(bestMove[0], bestMove[1]);
-    }, 500);
+    }, 200);
 
     // Ara gameTree conté l'arbre de joc amb les puntuacions per a cada estat del joc.
     // Pots utilitzar aquest arbre per a seleccionar el millor moviment.
@@ -377,7 +378,7 @@ function CPUturn() {
  * @param {*} maxdepth Depth of the original tree. Default 4
  * @returns a tree with all possible moves. ONLY THE FINAL DEPTH HAS POINTS
  */
-function CreateTree (tree, game, turnCPU = true, depth = 4, maxdepth = 4) {
+function CreateTree (tree, game, turnCPU = true, depth = 10, maxdepth = 10) {
     if (depth == 0) return {};
 
     //Get all pieces locations, depending on the turn
@@ -424,11 +425,11 @@ function CreateTree (tree, game, turnCPU = true, depth = 4, maxdepth = 4) {
                             finalpoints += 2;
                         } else {
                             //If the player has some pieces on the winning place and the CPU is not blocking, remove points
-                            finalpoints -= newgameD1[0].filter((v) => (v === "1")).length;
+                            finalpoints -= newgameD1[0].filter((v) => (v === "1")).length * 1.5;
                         }
 
                         //If the player has no pieces blocking the CPU winning, add points
-                        if (newgameD1[b.rows() - 1].filter((v) => (v === "1")).length == 0) finalpoints += 2;
+                        if (newgameD1[b.rows() - 1].filter((v) => (v === "1")).length == 0) finalpoints += 3;
 
 
                         MovNode.setPoints(finalpoints); //TODO: Analize the escenario
