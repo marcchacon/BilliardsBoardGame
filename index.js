@@ -374,47 +374,50 @@ function CPUturn() {
  * @param {Object} tree The MoveNode.selection object
  * @param {Array} game GameBoard 
  * @param {Boolean} turnCPU If it's the CPU turn
- * @param {*} depth Depth of the tree. Default 4
- * @param {*} maxdepth Depth of the original tree. Default 4
+ * @param {*} depth Depth of the tree. Default 0
+ * @param {*} maxdepth Max depth the tree may have. Default 4
  * @returns a tree with all possible moves. ONLY THE FINAL DEPTH HAS POINTS
  */
-function CreateTree (tree, game, turnCPU = true, depth = 10, maxdepth = 10) {
-    if (depth == 0) return {};
+function CreateTree (tree, game, turnCPU = true, depth = 0, maxdepth = 5) {
+    if (depth == maxdepth) return {};
 
     //Get all pieces locations, depending on the turn
     var locs = getPicecesLocs(game)[turnCPU ? 1 : 0];
 
     //For each piece, create a SelectionNode to simulate the "what if I decide to move this piece?"
     locs.forEach((FirstLoc, index) => {
-        var LocNode = new SelectionNode(FirstLoc, game, turnCPU);
-        tree[`Selection-${index}`] = LocNode;
-
         //Get all possible moves for the piece
         var posMoves = getMoves(FirstLoc, game);
+        if (posMoves.length == 0) return;
+
+        var LocNode = new SelectionNode(FirstLoc, game, turnCPU);
+        tree[`Selection-${depth}.${index}`] = LocNode;
 
         //For each possible move, create a MoveNode to simulate the "what if I decide to move this piece to this location?"
         posMoves.forEach((FirstMove) => {
 
             //Create a new gameboard with the new move
-            var newgameD1 = game.map(arr => [...arr]);
+            let newgameD1 = JSON.parse(JSON.stringify(game));
             newgameD1[FirstLoc[0]][FirstLoc[1]] = "0";
-            newgameD1[FirstMove[0]][FirstMove[1]] = turnCPU[0];
+            newgameD1[FirstMove[0]][FirstMove[1]] = turnCPU ? "2" : "1";
 
             //Create a new MoveNode
             var MovNode = new MoveNode(FirstMove, newgameD1, LocNode);
-            LocNode.addMove(MovNode);
+            LocNode.addMove(MovNode, depth);
 
             //Check if someone has won
             switch (winCheckCPU(newgameD1)) {
                 case "P1":
-                    MovNode.setPoints(-100 + (maxdepth - depth));
+                    MovNode.setPoints(-100 + depth);
+                    console.log(`P1 wins at depth ${depth}, setting points to ${MovNode.getPoints()} (${-100 - depth})`);
                     break;
                 case "CPU":
-                    MovNode.setPoints(200 - (maxdepth - depth));
+                    MovNode.setPoints(200 - depth);
+                    console.log(`CPU wins at depth ${depth}, setting points to ${MovNode.getPoints()} (${200 + depth})`);
                     break;
                 default:
                     //If no one has won, create a new tree with the new gameboard
-                    MovNode.selections = CreateTree(MovNode.selections, newgameD1, !turnCPU, depth - 1, maxdepth);
+                    MovNode.selections = CreateTree(MovNode.selections, newgameD1, !turnCPU, depth + 1, maxdepth);
 
                     //If it's the last depth, calculate the points
                     if (Object.keys(MovNode.selections).length == 0) {
@@ -433,6 +436,9 @@ function CreateTree (tree, game, turnCPU = true, depth = 10, maxdepth = 10) {
 
 
                         MovNode.setPoints(finalpoints); //TODO: Analize the escenario
+                        //console.log(`Setting final points at depth ${depth} to ${finalpoints}`);
+
+                        
                     } 
                     break;
             }

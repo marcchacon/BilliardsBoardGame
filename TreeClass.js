@@ -47,6 +47,7 @@ class SelectionNode {
      */
     setPoints(points) {
       if (typeof points === 'number') {
+        console.log(`Setting points for selection [${this.selection}] to ${points}`);
         this.points = points;
       } else throw this.INVALID_POINTS_ERROR;
     }
@@ -123,11 +124,12 @@ class SelectionNode {
     /**
      * Adds a move to this node
      * @param {MoveNode} move the move to add
+     * @param {Number} depth the depth of the move in the tree
      * @throws INVALID_MOVE_ERROR if move is not a MoveNode
      */
-    addMove(move) {
+    addMove(move, depth = "NaN") {
         if (move instanceof MoveNode) {
-          this.moves[`Move-${Object.keys(this.moves).length}`] = move;
+          this.moves[`Move-${depth}-${Object.keys(this.moves).length}`] = move;
           if (move.getParent() === undefined) move.setParent(this);
         } else throw this.INVALID_MOVE_ERROR;
     }
@@ -236,7 +238,7 @@ class MoveNode {
         if (this.points === undefined) {
             if (this.bestSelection === undefined) {
                 //no need to invert the getTurn() because if its true (AI's turn) we want to minimize the points
-                this.bestSelection = this.calculateBestSelection(this.getParent() ? this.getParent().getTurn() : false);
+                this.bestSelection = this.calculateBestSelection();
             } else {
                 this.setPoints(this.getBestSelection().getPoints());
             }
@@ -321,7 +323,7 @@ class MoveNode {
      * @param {Boolean} inverted if true, returns the selection with the lowest points
      * @returns {String} the best selection for this node, undefined if there are no selections
      */
-    calculateBestSelection(inverted = false) {
+    calculateBestSelection(inverted = this.getParent() ? this.getParent().getTurn() : false) {
         if (Object.keys(this.selections).length > 0) {
             let bestSelection = undefined;
             let bestPoints = inverted ? Infinity : -Infinity; // Initialize bestPoints based on the inverted flag
