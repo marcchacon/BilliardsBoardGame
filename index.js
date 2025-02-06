@@ -329,6 +329,9 @@ document.getElementById("2P").addEventListener("click", function () {
     CPU = false;
     this.disabled = true;
     document.getElementById("CPU").disabled = false;
+    if (turn[0] == "P2") {
+        CPUturn();
+    }
 });
 // create board
 initTable();  // 5x5 board
@@ -499,9 +502,6 @@ function movePieceCPU(pieceOrigin, loc) {
         case "P2":
             var piece = P2.find(temp => temp[1].toString() == pieceOrigin.toString())
             break;
-        case "CO":
-            var piece = CO.find(temp => temp[1].toString() == pieceOrigin.toString())
-            break;
         default:
             return;
     }
@@ -520,9 +520,6 @@ function movePieceCPU(pieceOrigin, loc) {
             break;
         case "P2":
             document.getElementById("turn").innerHTML = `It's P2 turn to move`;
-            break;
-        case "CO":
-            document.getElementById("turn").innerHTML = `It's common piece turn (${turn[1]})`;
             break;
     }
 
