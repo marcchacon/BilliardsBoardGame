@@ -324,14 +324,14 @@ document.getElementById("CPU").addEventListener("click", function () {
     CPU = true;
     this.disabled = true;
     document.getElementById("2P").disabled = false;
+    if (turn[0] == "P2") {
+        CPUturn();
+    }
 });
 document.getElementById("2P").addEventListener("click", function () {
     CPU = false;
     this.disabled = true;
     document.getElementById("CPU").disabled = false;
-    if (turn[0] == "P2") {
-        CPUturn();
-    }
 });
 // create board
 initTable();  // 5x5 board
