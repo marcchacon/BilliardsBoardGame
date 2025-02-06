@@ -16,9 +16,31 @@
     |
     <button type="button" id="CPU">VS CPU</button>
     <button type="button" id="2P" disabled>VS Player</button>
+    <button type="button" id="custom_vsCPU">Custom vsCPU</button>
     </div>
-  <table id='game'></table>
-  <span id='turn'>It's P1 turn)</span>
+  <table>
+    <th>
+      <table id='game'></table>
+    </th>
+    <th>
+      <div id="custom_vsCPU_settings" style="display:none;">
+        <label for="tree_depth" style="text-align:left;">Tree Depth:</label>
+        <input type="number" id="tree_depth" value="5" oninput="checkTreeDepth()"><br>
+        <span id="caution_message" style="color: red; display: none;">Value to high! Can slow down the browser</span><br>
+        <label for="lose_points" style="text-align:left;">Lose Points:</label>
+        <input type="number" id="lose_points" value="-100"><br>
+        <label for="win_points" style="text-align:left;">Win Points:</label>
+        <input type="number" id="win_points" value="200"><br>
+        <label for="CPU_blocking_points" style="text-align:left;">CPU Blocking Points:</label>
+        <input type="number" id="CPU_blocking_points" value="2"><br>
+        <label for="P1_winning_points_multiplier" style="text-align:left;">P1 Winning Points Multiplier:</label>
+        <input type="number" id="P1_winning_points_multiplier" value="1.5" step="0.1"><br>
+        <label for="P1_no_blocking_points" style="text-align:left;">P1 No Blocking Points:</label>
+        <input type="number" id="P1_no_blocking_points" value="3"><br>
+      </div>
+    </th>
+  </table>
+  <span id='turn'>It's P1 (red's) turn</span>
   <script src="jsboard.min.js"></script>
   <script src="index.js"></script>
   <script src="TreeClass.js"></script>

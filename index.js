@@ -1,4 +1,7 @@
-// The directions a piece can move
+/**
+ * The directions a piece can move
+ * @type {Array}
+ */
 const directions = [
     [-1, -1], // adalt esquerra
     [-1, 0], // adalt
@@ -15,11 +18,77 @@ const directions = [
 var player1 = jsboard.piece({ text: "P1", textIndent: "-9999px", background: "#E63D30", width: "60px", height: "60px", margin: "0 auto", "border-radius": "50%" });
 var player2 = jsboard.piece({ text: "P2", textIndent: "-9999px", background: "#3038E6", width: "60px", height: "60px", margin: "0 auto", "border-radius": "50%" });
 
-// variables for turns, piece to move and its locs
+/**
+ * Turn rotation
+ * @type {Array}
+ */
 var turn = ["P1", "P2"];
-var bindMoveLocs, bindMovePiece;
-var gamemode, started, win, CPU = false;
+
+/**
+ * Array of the locations a piece can move to
+ * @type {Array}
+ */
+var bindMoveLocs;
+
+/**
+ * The piece that is being moved, as an HTML element
+ * @type {HTMLElement}
+ */
+var bindMovePiece;
+var started, win, CPU = false;
 var P1, P2 = [];
+
+
+
+/**
+ * The depth of the minimax tree
+ * @type {number}
+ */
+let tree_depth;
+
+/**
+ * The points for losing
+ * @type {number}
+ */
+let lose_points;
+
+/**
+ * The points for winning
+ * @type {number}
+ */
+let win_points;
+
+/**
+ * If the CPU has some pieces blocking the player winning, add points
+ * @type {number}
+ */
+let CPU_blocking_points;
+
+/**
+ * If the player has some pieces on the winning place and the CPU is not blocking,
+ * remove points: P1_winning_points_multiplier * number of pieces
+ * @type {number}
+ */
+let P1_winning_points_multiplier;
+
+/**
+ * If the player has no pieces blocking the CPU winning, add points
+ * @type {number}
+ */
+let P1_no_blocking_points;
+
+function initialiseCpuParameters() {
+    tree_depth = 5;
+    lose_points = -100;
+    win_points = 200;
+    CPU_blocking_points = 2;
+    P1_winning_points_multiplier = 1.5;
+    P1_no_blocking_points = 3;
+}
+
+// Call the function to initialise the parameters
+initialiseCpuParameters();
+
 // show new locations 
 function showMoves(piece) {
     //console.log(b.cell(piece.parentNode).get())
@@ -131,7 +200,9 @@ function movePiece() {
         winCheck();
 
         if (!win && CPU && turn[0] == "P2") {
-            CPUturn();
+            setTimeout(() => {
+                CPUturn();
+            }, 500);
         }
     }
 }
@@ -292,7 +363,6 @@ function getMoves(piece, game = getGameboard()) {
 
 /**
  * Check if someone has won
- * If gamemode is true, P1 wins if he reaches the P2 side
  */
 function winCheck() {
     var game = getGameboard()
@@ -327,12 +397,21 @@ function initTable(sizex = 4, sizey = 3) {
 
 
 //Listeners for UI buttons
+var settingsDiv = document.getElementById('custom_vsCPU_settings');
+
+
 document.getElementById("reset").addEventListener("click", function () { resetBoard(true); });
 
 document.getElementById("CPU").addEventListener("click", function () {
-    CPU = true;
     this.disabled = true;
     document.getElementById("2P").disabled = false;
+    document.getElementById("custom_vsCPU").disabled = false
+    settingsDiv.style.display = 'none';
+
+    //return AI parameters to default
+    initialiseCpuParameters();
+
+    CPU = true;
     if (turn[0] == "P2") {
         CPUturn();
     }
@@ -341,7 +420,39 @@ document.getElementById("2P").addEventListener("click", function () {
     CPU = false;
     this.disabled = true;
     document.getElementById("CPU").disabled = false;
+    document.getElementById("custom_vsCPU").disabled = false;
+    settingsDiv.style.display = 'none';
 });
+
+document.getElementById('custom_vsCPU').addEventListener('click', function() {
+    this.disabled = true;
+    settingsDiv.style.display = 'block';
+
+    CPU = true;
+    if (turn[0] == "P2") {
+        CPUturn();
+    }
+});
+
+// Add event listeners to update AI parameters when inputs change
+document.getElementById("tree_depth").addEventListener("change", function() {tree_depth = parseInt(document.getElementById("tree_depth").value);});
+document.getElementById("lose_points").addEventListener("change", function() {lose_points = parseInt(document.getElementById("lose_points").value);});
+document.getElementById("win_points").addEventListener("change", function() {win_points = parseInt(document.getElementById("win_points").value);});
+document.getElementById("CPU_blocking_points").addEventListener("change", function() {CPU_blocking_points = parseInt(document.getElementById("CPU_blocking_points").value);});
+document.getElementById("P1_winning_points_multiplier").addEventListener("change", function() {P1_winning_points_multiplier = parseInt(document.getElementById("P1_winning_points_multiplier").value);});
+document.getElementById("P1_no_blocking_points").addEventListener("change", function() {P1_no_blocking_points = parseInt(document.getElementById("P1_no_blocking_points").value);});
+
+
+function checkTreeDepth() {
+    var treeDepth = document.getElementById('tree_depth').value;
+    var cautionMessage = document.getElementById('caution_message');
+    if (treeDepth > 5) {
+      cautionMessage.style.display = 'inline';
+    } else {
+      cautionMessage.style.display = 'none';
+    }
+  }
+
 // create board
 initTable();  // 5x5 board
 
@@ -390,8 +501,8 @@ function CPUturn() {
  * @param {*} maxdepth Max depth the tree may have. Default 4
  * @returns a tree with all possible moves. ONLY THE FINAL DEPTH HAS POINTS
  */
-function CreateTree (tree, game, turnCPU = true, depth = 0, maxdepth = 5) {
-    if (depth == maxdepth) return {};
+function CreateTree (tree, game, turnCPU = true, depth = 0, maxdepth = tree_depth) {
+    if (depth >= maxdepth) return {};
 
     //Get all pieces locations, depending on the turn
     var locs = getPicecesLocs(game)[turnCPU ? 1 : 0];
@@ -420,12 +531,12 @@ function CreateTree (tree, game, turnCPU = true, depth = 0, maxdepth = 5) {
             //Check if someone has won
             switch (winCheckCPU(newgameD1)) {
                 case "P1":
-                    MovNode.setPoints(-100 + depth);
-                    //console.log(`P1 wins at depth ${depth}, setting points to ${MovNode.getPoints()} (${-100 - depth})`);
+                    MovNode.setPoints(lose_points + depth);
+                    //console.log(`P1 wins at depth ${depth}, setting points to ${MovNode.getPoints()} (${-100 + depth})`);
                     break;
                 case "CPU":
-                    MovNode.setPoints(200 - depth);
-                    //console.log(`CPU wins at depth ${depth}, setting points to ${MovNode.getPoints()} (${200 + depth})`);
+                    MovNode.setPoints(win_points - depth);
+                    //console.log(`CPU wins at depth ${depth}, setting points to ${MovNode.getPoints()} (${200 - depth})`);
                     break;
                 default:
                     //If no one has won, create a new tree with the new gameboard
@@ -437,17 +548,17 @@ function CreateTree (tree, game, turnCPU = true, depth = 0, maxdepth = 5) {
 
                         //If the CPU has some pieces blocking the player winning, add points
                         if (newgameD1[0].filter((v) => (v === "2")).length > 0) {
-                            finalpoints += 2;
+                            finalpoints += CPU_blocking_points;
                         } else {
                             //If the player has some pieces on the winning place and the CPU is not blocking, remove points
-                            finalpoints -= newgameD1[0].filter((v) => (v === "1")).length * 1.5;
+                            finalpoints -= newgameD1[0].filter((v) => (v === "1")).length * P1_winning_points_multiplier;
                         }
 
                         //If the player has no pieces blocking the CPU winning, add points
-                        if (newgameD1[b.rows() - 1].filter((v) => (v === "1")).length == 0) finalpoints += 3;
+                        if (newgameD1[b.rows() - 1].filter((v) => (v === "1")).length == 0) finalpoints += P1_no_blocking_points;
 
 
-                        MovNode.setPoints(finalpoints); //TODO: Analize the escenario
+                        MovNode.setPoints(finalpoints);
                         //console.log(`Setting final points at depth ${depth} to ${finalpoints}`);
 
                         
