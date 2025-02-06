@@ -157,19 +157,25 @@ class SelectionNode {
      */
     calculateBestMove(inverted = !this.turn) {
         if (Object.keys(this.moves).length > 0) {
-            let bestMove = undefined;
+            let bestMoves = [];
             let bestPoints = inverted ? Infinity : -Infinity; // Initialize bestPoints based on the inverted flag
             for (const moveKey in this.moves) {
                 const move = this.moves[moveKey];
                 const points = move.getPoints();
                 if ((inverted && points < bestPoints) || (!inverted && points > bestPoints)) {
-                    this.bestMove = this.moves[moveKey];
-                    bestMove = this.moves[moveKey];
-                    this.points = points;
+                    bestMoves = [move];
                     bestPoints = points;
+                } else if (points === bestPoints) {
+                    bestMoves.push(move);
                 }
             }
-            return bestMove;
+            if (bestMoves.length > 0) {
+                const randomIndex = Math.floor(Math.random() * bestMoves.length);
+                const bestMove = bestMoves[randomIndex];
+                this.bestMove = bestMove;
+                this.points = bestPoints;
+                return bestMove;
+            }
         }
         return undefined;
     }
@@ -325,19 +331,25 @@ class MoveNode {
      */
     calculateBestSelection(inverted = this.getParent() ? this.getParent().getTurn() : false) {
         if (Object.keys(this.selections).length > 0) {
-            let bestSelection = undefined;
+            let bestSelections = [];
             let bestPoints = inverted ? Infinity : -Infinity; // Initialize bestPoints based on the inverted flag
             for (const selectionKey in this.selections) {
                 const selection = this.selections[selectionKey];
                 const points = selection.getPoints();
                 if ((inverted && points < bestPoints) || (!inverted && points > bestPoints)) {
-                    this.bestSelection = this.selections[selectionKey].selection;
-                    bestSelection = this.selections[selectionKey];
-                    this.points = points;
+                    bestSelections = [selection];
                     bestPoints = points;
+                } else if (points === bestPoints) {
+                    bestSelections.push(selection);
                 }
             }
-            return bestSelection;
+            if (bestSelections.length > 0) {
+                const randomIndex = Math.floor(Math.random() * bestSelections.length);
+                const bestSelection = bestSelections[randomIndex];
+                this.bestSelection = bestSelection.selection;
+                this.points = bestPoints;
+                return bestSelection;
+            }
         }
         return undefined;
     }

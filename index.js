@@ -51,10 +51,6 @@ function showMoves(piece) {
                 fixedLocs.push(arr[i]);
         newLocs = fixedLocs;
     })(newLocs);
-    if (newLocs.length == 0 && turn[0] == "CO") {
-        alert(`No moves available! ${turn.pop()} wins!`);
-        win = true;
-    }
 
     // bind green spaces to movement of piece
     bindMoveLocs = newLocs.slice();
@@ -108,6 +104,20 @@ function movePiece() {
         var temp = turn.shift();
         turn.push(temp);
 
+        var otherPieces = turn[0] === "P1" ? P1 : P2;
+        var hasMoves = otherPieces.some(piece => {
+            console.log(piece);
+            var loc = piece[1];
+            var moves = getMoves(loc);
+            console.log(moves);
+            return moves.length > 0;
+        });
+
+        if (!hasMoves) {
+            alert(`No moves available for any piece! ${turn[0]} skips turn!`);
+            turn.reverse();
+        }
+
         //Update turn text
         switch (turn[0]) {
             case "P1":
@@ -120,7 +130,6 @@ function movePiece() {
 
         winCheck();
 
-        //TODO: implement a way to do CPU vs CPU
         if (!win && CPU && turn[0] == "P2") {
             CPUturn();
         }
@@ -351,8 +360,8 @@ function CPUturn() {
     console.log("points:", gameTree.getPoints());
 
     if (CPUMove == undefined || CPUMove.getBestMove() == null) {
-        alert(`No moves available! ${turn.pop()} wins!`);
-        win = true;
+        alert(`No moves available! I skip the turn!`);
+        turn.reverse();
         return;
     }
     bestMove[0] = CPUMove.getSelection();
@@ -412,11 +421,11 @@ function CreateTree (tree, game, turnCPU = true, depth = 0, maxdepth = 5) {
             switch (winCheckCPU(newgameD1)) {
                 case "P1":
                     MovNode.setPoints(-100 + depth);
-                    console.log(`P1 wins at depth ${depth}, setting points to ${MovNode.getPoints()} (${-100 - depth})`);
+                    //console.log(`P1 wins at depth ${depth}, setting points to ${MovNode.getPoints()} (${-100 - depth})`);
                     break;
                 case "CPU":
                     MovNode.setPoints(200 - depth);
-                    console.log(`CPU wins at depth ${depth}, setting points to ${MovNode.getPoints()} (${200 + depth})`);
+                    //console.log(`CPU wins at depth ${depth}, setting points to ${MovNode.getPoints()} (${200 + depth})`);
                     break;
                 default:
                     //If no one has won, create a new tree with the new gameboard
