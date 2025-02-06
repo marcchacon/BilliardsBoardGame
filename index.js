@@ -427,6 +427,8 @@ document.getElementById("2P").addEventListener("click", function () {
 document.getElementById('custom_vsCPU').addEventListener('click', function() {
     this.disabled = true;
     settingsDiv.style.display = 'block';
+    document.getElementById("2P").disabled = false;
+    document.getElementById("CPU").disabled = false;
 
     CPU = true;
     if (turn[0] == "P2") {
