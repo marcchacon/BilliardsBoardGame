@@ -1,99 +1,18 @@
 /**
- * The directions a piece can move
- * @type {Array}
+ * @file index.js
+ * This file contains the main logic of the game.
  */
-const directions = [
-    [-1, -1], // adalt esquerra
-    [-1, 0], // adalt
-    [-1, 1], // adalt dreta
-    [0, -1], // esquerra
-    [0, 1], // dreta
-    [1, -1], // abaix esquerra
-    [1, 0], // abaix
-    [1, 1], // abaix dreta
-];
-
-
-// setup pieces
-var player1 = jsboard.piece({ text: "P1", textIndent: "-9999px", background: "#E63D30", width: "60px", height: "60px", margin: "0 auto", "border-radius": "50%" });
-var player2 = jsboard.piece({ text: "P2", textIndent: "-9999px", background: "#3038E6", width: "60px", height: "60px", margin: "0 auto", "border-radius": "50%" });
-
-/**
- * Turn rotation
- * @type {Array}
- */
-var turn = ["P1", "P2"];
-
-/**
- * Array of the locations a piece can move to
- * @type {Array}
- */
-var bindMoveLocs;
-
-/**
- * The piece that is being moved, as an HTML element
- * @type {HTMLElement}
- */
-var bindMovePiece;
-var started, win, CPU = false;
-var P1, P2 = [];
-
 
 
 /**
- * The depth of the minimax tree
- * @type {number}
+ * Show the possible moves of a piece
+ * 
+ * This funcion is called when a piece is clicked
+ * @param {HTMLElement} piece the piece clicked.
  */
-let tree_depth;
-
-/**
- * The points for losing
- * @type {number}
- */
-let lose_points;
-
-/**
- * The points for winning
- * @type {number}
- */
-let win_points;
-
-/**
- * If the CPU has some pieces blocking the player winning, add points
- * @type {number}
- */
-let CPU_blocking_points;
-
-/**
- * If the player has some pieces on the winning place and the CPU is not blocking,
- * remove points: P1_winning_points_multiplier * number of pieces
- * @type {number}
- */
-let P1_winning_points_multiplier;
-
-/**
- * If the player has no pieces blocking the CPU winning, add points
- * @type {number}
- */
-let P1_no_blocking_points;
-
-function initialiseCpuParameters() {
-    tree_depth = 5;
-    lose_points = -100;
-    win_points = 200;
-    CPU_blocking_points = 2;
-    P1_winning_points_multiplier = 1.5;
-    P1_no_blocking_points = 3;
-}
-
-// Call the function to initialise the parameters
-initialiseCpuParameters();
-
-// show new locations 
 function showMoves(piece) {
     //console.log(b.cell(piece.parentNode).get())
 
-    // check if game has ended
     if (win) return
 
     // check if it's the turn of the piece
@@ -104,25 +23,22 @@ function showMoves(piece) {
 
     resetBoard()
 
-    // parentNode is needed because the piece you are clicking 
-    // on doesn't have access to cell functions, therefore you 
-    // need to access the parent of the piece because pieces are 
-    // always contained within in cells
-    var loc = b.cell(piece.parentNode).where();
+    // the piece itself doesn't have the location, so we need to get it from the cell (parentNode)
+    var loc = getPieceLocation(piece);
+    console.log(piece);   
     var newLocs = getMoves(loc);
 
     // remove illegal moves by checking 
     // content of b.cell().get()
-    (function removeIllegalMoves(arr) {
-        var fixedLocs = [];
-        for (var i = 0; i < arr.length; i++)
-            if (b.cell(arr[i]).get() == null)
-                fixedLocs.push(arr[i]);
-        newLocs = fixedLocs;
-    })(newLocs);
+    var fixedLocs = [];
+    for (var i = 0; i < newLocs.length; i++){
+        if (b.cell(newLocs[i]).get() == null) {
+            fixedLocs.push(newLocs[i]);
+        }
+    }
 
-    // bind green spaces to movement of piece
-    bindMoveLocs = newLocs.slice();
+    // bind spaces to movement of piece
+    bindMoveLocs = fixedLocs.slice();
     bindMovePiece = piece;
     bindMoveEvents(bindMoveLocs);
 
@@ -132,7 +48,8 @@ function showMoves(piece) {
 /**
  * Creates the listeners and shows the possible moves
  * 
- * @param {Array} locs Possible moves
+ * @param {Array} locs an array of locations to bind the events to
+ * @example bindMoveEvents([[0, 1], [0, 2], [0, 3]])
  */
 function bindMoveEvents(locs) {
     for (var i = 0; i < locs.length; i++) {
@@ -149,52 +66,31 @@ function bindMoveEvents(locs) {
 }
 
 /**
- * Move the piece to the clicked location
+ * Move the piece to the clicked location. The piece moved is the one in {@link bindMovePiece}
  * 
+ * This function is called when a possible move cell is clicked. If want to move any piece to any cell, refer to {@link movePieceCPU()}
  * @return {void}
  */
 function movePiece() {
     started = true;
+    
     var userClick = b.cell(this).where();
     if (bindMoveLocs.indexOf(userClick)) {
         b.cell(userClick).place(bindMovePiece);
-        switch (turn[0]) {
-            case "P1":
-                P1.find(piece => piece[0] == bindMovePiece)[1] = userClick;
-                break;
-            case "P2":
-                P2.find(piece => piece[0] == bindMovePiece)[1] = userClick;
-                break;
-        }
 
         resetBoard();
-
-        //Update turn
-        var temp = turn.shift();
-        turn.push(temp);
+        updateTurn();
 
         var otherPieces = turn[0] === "P1" ? P1 : P2;
         var hasMoves = otherPieces.some(piece => {
-            console.log(piece);
-            var loc = piece[1];
+            var loc = getPieceLocation(piece);
             var moves = getMoves(loc);
-            console.log(moves);
             return moves.length > 0;
         });
 
         if (!hasMoves) {
             alert(`No moves available for any piece! ${turn[0]} skips turn!`);
-            turn.reverse();
-        }
-
-        //Update turn text
-        switch (turn[0]) {
-            case "P1":
-                document.getElementById("turn").innerHTML = `It's P1 turn to move`
-                break;
-            case "P2":
-                document.getElementById("turn").innerHTML = `It's P2 turn to move`;
-                break;
+            updateTurn();
         }
 
         winCheck();
@@ -202,7 +98,7 @@ function movePiece() {
         if (!win && CPU && turn[0] == "P2") {
             setTimeout(() => {
                 CPUturn();
-            }, 500);
+            }, 200);
         }
     }
 }
@@ -247,18 +143,17 @@ function resetBoard(hard = false) {
         //put pieces in place
         P1 = [];
         P2 = [];
-        CO = [];
 
         for (let i = 0; i < b.cols(); i++) {
 
-            P1.push([player1.clone(), [b.rows() - 1, i]]);
-            P2.push([player2.clone(), [0, i]]);
+            P1.push(player1.clone());
+            P2.push(player2.clone());
 
-            b.cell(P1[i][1]).place(P1[i][0]);
-            b.cell(P2[i][1]).place(P2[i][0]);
+            b.cell([b.rows() - 1, i]).place(P1[i]);
+            b.cell([0, i]).place(P2[i]);
 
-            P1[i][0].addEventListener("click", function () { showMoves(this); });
-            P2[i][0].addEventListener("click", function () { showMoves(this); });
+            P1[i].addEventListener("click", function () { showMoves(this); });
+            P2[i].addEventListener("click", function () { showMoves(this); });
         }
 
         // variables for turns, piece to move and its locs
@@ -267,15 +162,14 @@ function resetBoard(hard = false) {
 }
 
 /**
- * Aux function to get the gameboard
+ * Aux function to get the gameboard. Parses the board matrix to remove nulls
+ * 
  * 
  * @returns {Array} Gameboard, 0 = empty, 1 = P1, 2 = P2
  */
 function getGameboard() {
 
-    game = b.matrix()
-
-    game.forEach((row, index) => {
+    b.matrix().forEach((row, index) => {
         row.forEach((col, index2) => {
             switch (col) {
                 case null:
@@ -395,243 +289,11 @@ function initTable(sizex = 4, sizey = 3) {
     resetBoard(true);
 }
 
-
-//Listeners for UI buttons
-var settingsDiv = document.getElementById('custom_vsCPU_settings');
-
-
-document.getElementById("reset").addEventListener("click", function () { resetBoard(true); });
-
-document.getElementById("CPU").addEventListener("click", function () {
-    this.disabled = true;
-    document.getElementById("2P").disabled = false;
-    document.getElementById("custom_vsCPU").disabled = false
-    settingsDiv.style.display = 'none';
-
-    //return AI parameters to default
-    initialiseCpuParameters();
-
-    CPU = true;
-    if (turn[0] == "P2") {
-        CPUturn();
-    }
-});
-document.getElementById("2P").addEventListener("click", function () {
-    CPU = false;
-    this.disabled = true;
-    document.getElementById("CPU").disabled = false;
-    document.getElementById("custom_vsCPU").disabled = false;
-    settingsDiv.style.display = 'none';
-});
-
-document.getElementById('custom_vsCPU').addEventListener('click', function() {
-    this.disabled = true;
-    settingsDiv.style.display = 'block';
-    document.getElementById("2P").disabled = false;
-    document.getElementById("CPU").disabled = false;
-
-    CPU = true;
-    if (turn[0] == "P2") {
-        CPUturn();
-    }
-});
-
-// Add event listeners to update AI parameters when inputs change
-document.getElementById("tree_depth").addEventListener("change", function() {tree_depth = parseInt(document.getElementById("tree_depth").value);});
-document.getElementById("lose_points").addEventListener("change", function() {lose_points = parseInt(document.getElementById("lose_points").value);});
-document.getElementById("win_points").addEventListener("change", function() {win_points = parseInt(document.getElementById("win_points").value);});
-document.getElementById("CPU_blocking_points").addEventListener("change", function() {CPU_blocking_points = parseInt(document.getElementById("CPU_blocking_points").value);});
-document.getElementById("P1_winning_points_multiplier").addEventListener("change", function() {P1_winning_points_multiplier = parseInt(document.getElementById("P1_winning_points_multiplier").value);});
-document.getElementById("P1_no_blocking_points").addEventListener("change", function() {P1_no_blocking_points = parseInt(document.getElementById("P1_no_blocking_points").value);});
-
-
-function checkTreeDepth() {
-    var treeDepth = document.getElementById('tree_depth').value;
-    var cautionMessage = document.getElementById('caution_message');
-    if (treeDepth > 5) {
-      cautionMessage.style.display = 'inline';
-    } else {
-      cautionMessage.style.display = 'none';
-    }
-  }
-
-// create board
-initTable();  // 5x5 board
-
 /**
- * Current CPU turn function
+ * Function to update the turn
+ * It will update the turn array and the turn text
  */
-function CPUturn() {
-    var game = getGameboard();
-    var gameTree = new MoveNode(null, game);
-    gameTree.selections = CreateTree(gameTree.selections, game);
-    var CPUMove;
-    var bestMove = [];
-    
-    console.log("tree:", gameTree);
-    var CPUMove = gameTree.calculateBestSelection();
-    console.log("points:", gameTree.getPoints());
-
-    if (CPUMove == undefined || CPUMove.getBestMove() == null) {
-        alert(`No moves available! I skip the turn!`);
-        turn.reverse();
-        return;
-    }
-    bestMove[0] = CPUMove.getSelection();
-    bestMove[1] = CPUMove.getBestMove().getMove();
-
-    console.log("tree:", gameTree);
-    console.log("bestMove:", bestMove);
-
-    //Wait half a second to move the piece
-    setTimeout(() => {
-        movePieceCPU(bestMove[0], bestMove[1]);
-    }, 200);
-
-    // Ara gameTree conté l'arbre de joc amb les puntuacions per a cada estat del joc.
-    // Pots utilitzar aquest arbre per a seleccionar el millor moviment.
-}
-
-
-/**
- * Creates tree using Classes
- * Minimax algorithm
- * @param {Object} tree The MoveNode.selection object
- * @param {Array} game GameBoard 
- * @param {Boolean} turnCPU If it's the CPU turn
- * @param {*} depth Depth of the tree. Default 0
- * @param {*} maxdepth Max depth the tree may have. Default 4
- * @returns a tree with all possible moves. ONLY THE FINAL DEPTH HAS POINTS
- */
-function CreateTree (tree, game, turnCPU = true, depth = 0, maxdepth = tree_depth) {
-    if (depth >= maxdepth) return {};
-
-    //Get all pieces locations, depending on the turn
-    var locs = getPicecesLocs(game)[turnCPU ? 1 : 0];
-
-    //For each piece, create a SelectionNode to simulate the "what if I decide to move this piece?"
-    locs.forEach((FirstLoc, index) => {
-        //Get all possible moves for the piece
-        var posMoves = getMoves(FirstLoc, game);
-        if (posMoves.length == 0) return;
-
-        var LocNode = new SelectionNode(FirstLoc, game, turnCPU);
-        tree[`Selection-${depth}.${index}`] = LocNode;
-
-        //For each possible move, create a MoveNode to simulate the "what if I decide to move this piece to this location?"
-        posMoves.forEach((FirstMove) => {
-
-            //Create a new gameboard with the new move
-            let newgameD1 = JSON.parse(JSON.stringify(game));
-            newgameD1[FirstLoc[0]][FirstLoc[1]] = "0";
-            newgameD1[FirstMove[0]][FirstMove[1]] = turnCPU ? "2" : "1";
-
-            //Create a new MoveNode
-            var MovNode = new MoveNode(FirstMove, newgameD1, LocNode);
-            LocNode.addMove(MovNode, depth);
-
-            //Check if someone has won
-            switch (winCheckCPU(newgameD1)) {
-                case "P1":
-                    MovNode.setPoints(lose_points + depth);
-                    //console.log(`P1 wins at depth ${depth}, setting points to ${MovNode.getPoints()} (${-100 + depth})`);
-                    break;
-                case "CPU":
-                    MovNode.setPoints(win_points - depth);
-                    //console.log(`CPU wins at depth ${depth}, setting points to ${MovNode.getPoints()} (${200 - depth})`);
-                    break;
-                default:
-                    //If no one has won, create a new tree with the new gameboard
-                    MovNode.selections = CreateTree(MovNode.selections, newgameD1, !turnCPU, depth + 1, maxdepth);
-
-                    //If it's the last depth, calculate the points
-                    if (Object.keys(MovNode.selections).length == 0) {
-                        let finalpoints = 5;
-
-                        //If the CPU has some pieces blocking the player winning, add points
-                        if (newgameD1[0].filter((v) => (v === "2")).length > 0) {
-                            finalpoints += CPU_blocking_points;
-                        } else {
-                            //If the player has some pieces on the winning place and the CPU is not blocking, remove points
-                            finalpoints -= newgameD1[0].filter((v) => (v === "1")).length * P1_winning_points_multiplier;
-                        }
-
-                        //If the player has no pieces blocking the CPU winning, add points
-                        if (newgameD1[b.rows() - 1].filter((v) => (v === "1")).length == 0) finalpoints += P1_no_blocking_points;
-
-
-                        MovNode.setPoints(finalpoints);
-                        //console.log(`Setting final points at depth ${depth} to ${finalpoints}`);
-
-                        
-                    } 
-                    break;
-            }
-            
-        })
-    })
-    return tree;
-    
-}
-
-function getPicecesLocs(board = getGameboard()) {
-    var P1locs = []
-    var P2locs = []
-
-    board.forEach((row, index) => {
-        row.forEach((col, index2) => {
-            switch (col) {
-                case "1":
-                    P1locs.push([index, index2]);
-                    break;
-                case "2":
-                    P2locs.push([index, index2]);
-                    break;
-            }
-        });
-    });
-
-    return [P1locs, P2locs]
-}
-
-/**
- * Aux function for CPU to check if someone has won
- * 
-*/
-function winCheckCPU(game) {
-    if (game[0].join("").match(/^(1)\1{1,}$/g)) {
-        return "P1"
-    } else if (game[b.rows() - 1].join("").match(/^(2)\1{1,}$/g)) {
-        return "CPU"
-    }
-    return false
-}
-
-/**
- * Aux function for CPU to move the pieces
- * 
- * @param {Array} pieceOrigin Piece position
- * @param {Array} loc New location
- * @return {void}
- */
-function movePieceCPU(pieceOrigin, loc) {
-    started = true;
-    var pieceValue = b.cell(pieceOrigin).get();
-    switch (pieceValue) {
-        case "P1":
-            var piece = P1.find(temp => temp[1].toString() == pieceOrigin.toString())
-            break;
-        case "P2":
-            var piece = P2.find(temp => temp[1].toString() == pieceOrigin.toString())
-            break;
-        default:
-            return;
-    }
-    piece[1] = loc;
-    b.cell(loc).place(piece[0]);
-    resetBoard();
-
-    //Update turn
+function updateTurn(){
     var temp = turn.shift();
     turn.push(temp);
 
@@ -644,7 +306,17 @@ function movePieceCPU(pieceOrigin, loc) {
             document.getElementById("turn").innerHTML = `It's P2 turn to move`;
             break;
     }
-
-    winCheck();
-
 }
+
+/**
+ * Returns the piece location
+ * @param {HTMLElement} piece Piece to get location
+ * @returns {Array} Location of the piece
+ */
+function getPieceLocation(piece){
+    return b.cell(piece.parentNode).where()
+}
+
+//Start of the game
+initialiseCpuParameters();
+initTable(); 

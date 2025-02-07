@@ -25,7 +25,7 @@
     <th>
       <div id="custom_vsCPU_settings" style="display:none;">
         <label for="tree_depth" style="text-align:left;">Tree Depth:</label>
-        <input type="number" id="tree_depth" value="5" oninput="checkTreeDepth()"><br>
+        <input type="number" id="tree_depth" value="5"><br>
         <span id="caution_message" style="color: red; display: none;">Value to high! Can slow down the browser</span><br>
         <label for="lose_points" style="text-align:left;">Lose Points:</label>
         <input type="number" id="lose_points" value="-100"><br>
@@ -41,7 +41,10 @@
     </th>
   </table>
   <span id='turn'>It's P1 (red's) turn</span>
-  <script src="jsboard.min.js"></script>
+  <script src="jsboard.js"></script>
+  <script src="variables.js"></script>
+  <script src="uiListeners.js"></script>
+  <script src="cpu.js"></script>
   <script src="index.js"></script>
   <script src="TreeClass.js"></script>
 </body>
