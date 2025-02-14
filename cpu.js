@@ -20,33 +20,35 @@ function initialiseCpuParameters() {
 /**
  * CPU turn function
  */
-function CPUturn() {
+function CPUturn(cpu = true) {
     var game = getGameboard();
     var gameTree = new MoveNode(null, game);
-    gameTree.selections = CreateTree(gameTree.selections, game);
+    gameTree.selections = CreateTree(gameTree.selections, game, cpu);
     var CPUMove;
     var bestMove = [];
     
-    console.log("tree:", gameTree);
-    var CPUMove = gameTree.calculateBestSelection();
-    console.log("points:", gameTree.getPoints());
+    //console.log("tree:", gameTree);
+    var CPUMove = gameTree.calculateBestSelection(!cpu);
+    //console.log("points:", gameTree.getPoints());
 
     if (CPUMove == undefined || CPUMove.getBestMove() == null) {
         alert(`No moves available! I skip the turn!`);
-        turn.reverse();
+        updateTurn()
         return;
     }
     bestMove[0] = CPUMove.getSelection();
     bestMove[1] = CPUMove.getBestMove().getMove();
 
-    console.log("tree:", gameTree);
-    console.log("bestMove:", bestMove);
+    //console.log("tree:", gameTree);
+    //console.log("bestMove:", bestMove);
 
     movePieceCPU(bestMove[0], bestMove[1]);
+    updateTurn()
 
-
-    // Ara gameTree conté l'arbre de joc amb les puntuacions per a cada estat del joc.
-    // Pots utilitzar aquest arbre per a seleccionar el millor moviment.
+    game = null;
+    gameTree = null;
+    CPUMove = null;
+    bestMove = null;
 }
 
 /**
@@ -59,7 +61,7 @@ function CPUturn() {
  * @param {*} maxdepth Max depth the tree may have. Default 4
  * @returns a tree with all possible moves. ONLY THE FINAL DEPTH HAS POINTS
  */
-function CreateTree (tree, game, turnCPU = true, depth = 0, maxdepth = tree_depth) {
+function CreateTree (tree, game, turnCPU = true, depth = 0, maxdepth = tree_depth, alpha = -Infinity, beta = Infinity) {
     if (depth >= maxdepth) return {};
 
     //Get all pieces locations, depending on the turn
@@ -98,7 +100,7 @@ function CreateTree (tree, game, turnCPU = true, depth = 0, maxdepth = tree_dept
                     break;
                 default:
                     //If no one has won, create a new tree with the new gameboard
-                    MovNode.selections = CreateTree(MovNode.selections, newgameD1, !turnCPU, depth + 1, maxdepth);
+                    MovNode.selections = CreateTree(MovNode.selections, newgameD1, !turnCPU, depth + 1, maxdepth, alpha, beta);
 
                     //If it's the last depth, calculate the points
                     if (Object.keys(MovNode.selections).length == 0) {
@@ -123,8 +125,25 @@ function CreateTree (tree, game, turnCPU = true, depth = 0, maxdepth = tree_dept
                     } 
                     break;
             }
-            
-        })
+
+            if (turnCPU) {
+                alpha = Math.max(alpha, MovNode.getPoints());
+                if (beta <= alpha) {
+                    return;
+                }
+            } else {
+                beta = Math.min(beta, MovNode.getPoints());
+                if (beta <= alpha) {
+                    return;
+                }
+            }
+            // Nullify references to help garbage collection
+            newgameD1 = null;
+            MovNode = null;
+        });
+
+        // Nullify references to help garbage collection
+        LocNode = null;
     })
     return tree;
     
@@ -188,5 +207,4 @@ function movePieceCPU(pieceOrigin, loc) {
 
     resetBoard();
     winCheck();
-    updateTurn()
 }

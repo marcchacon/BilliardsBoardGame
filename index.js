@@ -168,6 +168,7 @@ function resetBoard(hard = false) {
  * @returns {Array} Gameboard, 0 = empty, 1 = P1, 2 = P2
  */
 function getGameboard() {
+    let game = Array.from({ length: b.rows() }, () => Array.from({ length: b.cols() }, () => "0"));
 
     b.matrix().forEach((row, index) => {
         row.forEach((col, index2) => {
@@ -185,7 +186,7 @@ function getGameboard() {
         });
     });
 
-    //console.log("GAMEBOARD DONE: " + game)
+    console.log("GAMEBOARD DONE: " + game)
 
     return game
 }

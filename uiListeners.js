@@ -11,6 +11,7 @@ document.getElementById("CPU").addEventListener("click", function () {
     this.disabled = true;
     document.getElementById("2P").disabled = false;
     document.getElementById("custom_vsCPU").disabled = false
+    document.getElementById("CPUvsCPU").disabled = false;
     settingsDiv.style.display = 'none';
 
     //return AI parameters to default
@@ -26,6 +27,7 @@ document.getElementById("2P").addEventListener("click", function () {
     this.disabled = true;
     document.getElementById("CPU").disabled = false;
     document.getElementById("custom_vsCPU").disabled = false;
+    document.getElementById("CPUvsCPU").disabled = false;
     settingsDiv.style.display = 'none';
 });
 
@@ -34,6 +36,7 @@ document.getElementById('custom_vsCPU').addEventListener('click', function () {
     settingsDiv.style.display = 'block';
     document.getElementById("2P").disabled = false;
     document.getElementById("CPU").disabled = false;
+    document.getElementById("CPUvsCPU").disabled = false;
 
     CPU = true;
     if (turn[0] == "P2") {
@@ -49,6 +52,21 @@ document.getElementById("tree_depth").addEventListener("change", function () {
         cautionMessage.style.display = 'inline';
     } else {
         cautionMessage.style.display = 'none';
+    }
+});
+
+document.getElementById("CPUvsCPU").addEventListener("click", async function () {
+    this.disabled = true;
+    document.getElementById("2P").disabled = false;
+    document.getElementById("CPU").disabled = false;
+    document.getElementById("custom_vsCPU").disabled = false;
+    settingsDiv.style.display = 'none';
+    while (!win && this.disabled) {
+        console.log ("turn[0]:", turn[0]);
+        var player = (turn[0] == "P1") ? false : true;
+        console.log(player);
+        CPUturn(player);
+        await new Promise(resolve => setTimeout(resolve, 50));
     }
 });
 document.getElementById("lose_points").addEventListener("change", function () { lose_points = parseInt(document.getElementById("lose_points").value); });
