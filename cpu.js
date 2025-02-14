@@ -9,7 +9,7 @@
  * IF YOU WANT TO CHANGE THE CPU DEFAULT PARAMETERS, DO IT IN THIS FUNCTION
  */
 function initialiseCpuParameters() {
-    tree_depth = 5;
+    tree_depth = 6;
     lose_points = -100;
     win_points = 200;
     CPU_blocking_points = 2;
