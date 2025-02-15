@@ -32,7 +32,7 @@ function CPUturn(cpu = true) {
     //console.log("points:", gameTree.getPoints());
 
     if (CPUMove == undefined || CPUMove.getBestMove() == null) {
-        alert(`No moves available! I skip the turn!`);
+        if (!CPUvsCPU) alert(`No moves available! I skip the turn!`);
         updateTurn()
         return;
     }

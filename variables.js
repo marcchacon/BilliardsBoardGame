@@ -54,7 +54,13 @@ var win;
 /**
  * If the game is against the CPU
  */
-CPU = false;
+let CPU = false;
+
+/**
+ * If it's CPU vs CPU
+ * @type {boolean}
+ */
+let CPUvsCPU = false;
 
 /**
  * The P1 pieces, as a list of [piece, location]

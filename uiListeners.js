@@ -18,6 +18,7 @@ document.getElementById("CPU").addEventListener("click", function () {
     initialiseCpuParameters();
 
     CPU = true;
+    CPUvsCPU = false;
     if (turn[0] == "P2") {
         CPUturn();
     }
@@ -39,6 +40,7 @@ document.getElementById('custom_vsCPU').addEventListener('click', function () {
     document.getElementById("CPUvsCPU").disabled = false;
 
     CPU = true;
+    CPUvsCPU = false;
     if (turn[0] == "P2") {
         CPUturn();
     }
@@ -61,12 +63,19 @@ document.getElementById("CPUvsCPU").addEventListener("click", async function () 
     document.getElementById("CPU").disabled = false;
     document.getElementById("custom_vsCPU").disabled = false;
     settingsDiv.style.display = 'none';
+    
+    CPU = true;
+    CPUvsCPU = true;
+    
+    let moves = 0;
     while (!win && this.disabled) {
         console.log ("turn[0]:", turn[0]);
         var player = (turn[0] == "P1") ? false : true;
         console.log(player);
         CPUturn(player);
         await new Promise(resolve => setTimeout(resolve, 50));
+        moves++;
+        document.getElementById("moves").innerHTML = `It's been ${moves} moves!`;
     }
 });
 document.getElementById("lose_points").addEventListener("change", function () { lose_points = parseInt(document.getElementById("lose_points").value); });
