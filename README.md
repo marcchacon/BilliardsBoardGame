@@ -1,4 +1,4 @@
-# NeutronBoardGame
+# BilliardsBoardGame
 This is a JavaScript code to play a very unknown game called [Billiards](https://boardgamegeek.com/boardgame/32987/billiards).
 You can play it [here](https://marcchacon.github.io/BilliardsBoardGame/)!
 
@@ -26,4 +26,5 @@ If the CPU is not blocking your winning spots, it will multiply this value on th
 These points are subtracted! If you want to encourage the CPU to do this, set a negative value. 
 ### P1 No Blocking Points
 The points awarded when you have no defense (no pieces on the CPU winning spots) 
-
+## CPU vs CPU
+In this gamemode you can see an automated version of the game! Edit the CPU via the custom cpu menu and enjoy! (Can cause Out of Memory errors in your browser if tree depth is set too high)
